@@ -1,0 +1,225 @@
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
+    order (id) {
+        id -> Int4,
+        status -> Int2,
+        created_at -> Timestamp,
+        customer_id -> Int4,
+        payment_method_id -> Int4,
+        shipping_information_id -> Int4,
+        store_id -> Int4,
+        total_discount -> Nullable<Numeric>,
+        total_price -> Numeric,
+    }
+}
+
+diesel::table! {
+    order_item (id) {
+        id -> Int4,
+        quantity -> Int4,
+        order_id -> Nullable<Int4>,
+        product_item_id -> Int4,
+        shopping_cart_id -> Nullable<Int4>,
+        unit_price -> Numeric,
+    }
+}
+
+diesel::table! {
+    payment_method (id) {
+        id -> Int4,
+        name -> Text,
+        inactive -> Bool,
+        deleted -> Bool,
+        created_at -> Timestamp,
+        store_id -> Int4,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    product (id) {
+        id -> Int4,
+        name -> Text,
+        deleted -> Bool,
+        category_id -> Int4,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    product_category (id) {
+        id -> Int4,
+        name -> Text,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    product_discount (id) {
+        id -> Int4,
+        percentual -> Numeric,
+        created_at -> Timestamp,
+        expires_at -> Timestamp,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    product_item (id) {
+        id -> Int4,
+        sku -> Nullable<Text>,
+        description -> Nullable<Text>,
+        price -> Numeric,
+        stock -> Int4,
+        deleted -> Bool,
+        created_at -> Timestamp,
+        discount_id -> Nullable<Int4>,
+        image_url -> Nullable<Text>,
+        product_id -> Int4,
+        store_id -> Int4,
+        updated_at -> Timestamp,
+        variant_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    product_variant (id) {
+        id -> Int4,
+        name -> Text,
+        value -> Text,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    shipping_information (id) {
+        id -> Int4,
+        status -> Int4,
+        address_id -> Int4,
+        created_at -> Timestamp,
+        shipping_method_id -> Int4,
+        shipping_price -> Numeric,
+        tracking_number -> Nullable<Text>,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    shipping_method (id) {
+        id -> Int4,
+        name -> Text,
+        inactive -> Bool,
+        deleted -> Bool,
+        created_at -> Timestamp,
+        store_id -> Int4,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    shopping_cart (id) {
+        id -> Int4,
+        created_at -> Timestamp,
+        customer_id -> Int4,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    store (id) {
+        id -> Int4,
+        name -> Text,
+        created_at -> Timestamp,
+        logo_url -> Nullable<Text>,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    store_invite (id) {
+        id -> Text,
+        valid -> Bool,
+        created_at -> Timestamp,
+        store_id -> Int4,
+    }
+}
+
+diesel::table! {
+    user (id) {
+        id -> Int4,
+        email -> Text,
+        password -> Text,
+        #[sql_name = "type"]
+        type_ -> Int4,
+        created_at -> Timestamp,
+        first_name -> Text,
+        last_login -> Timestamp,
+        last_name -> Text,
+        managed_store_id -> Nullable<Int4>,
+        updated_at -> Timestamp,
+        salt -> Text,
+    }
+}
+
+diesel::table! {
+    user_address (id) {
+        id -> Int4,
+        number -> Text,
+        city -> Text,
+        country -> Text,
+        deleted -> Bool,
+        address_line1 -> Text,
+        address_line2 -> Nullable<Text>,
+        created_at -> Timestamp,
+        phone_country_code -> Nullable<Text>,
+        phone_number -> Nullable<Text>,
+        postal_code -> Text,
+        updated_at -> Timestamp,
+        user_id -> Int4,
+    }
+}
+
+diesel::joinable!(order -> payment_method (payment_method_id));
+diesel::joinable!(order -> shipping_information (shipping_information_id));
+diesel::joinable!(order -> store (store_id));
+diesel::joinable!(order -> user (customer_id));
+diesel::joinable!(order_item -> order (order_id));
+diesel::joinable!(order_item -> product_item (product_item_id));
+diesel::joinable!(order_item -> shopping_cart (shopping_cart_id));
+diesel::joinable!(payment_method -> store (store_id));
+diesel::joinable!(product -> product_category (category_id));
+diesel::joinable!(product -> store (store_id));
+diesel::joinable!(product_category -> store (store_id));
+diesel::joinable!(product_discount -> store (store_id));
+diesel::joinable!(product_item -> product (product_id));
+diesel::joinable!(product_item -> product_discount (discount_id));
+diesel::joinable!(product_item -> product_variant (variant_id));
+diesel::joinable!(product_item -> store (store_id));
+diesel::joinable!(product_variant -> store (store_id));
+diesel::joinable!(shipping_information -> shipping_method (shipping_method_id));
+diesel::joinable!(shipping_information -> user_address (address_id));
+diesel::joinable!(shipping_method -> store (store_id));
+diesel::joinable!(shopping_cart -> store (store_id));
+diesel::joinable!(shopping_cart -> user (customer_id));
+diesel::joinable!(store_invite -> store (store_id));
+diesel::joinable!(user -> store (managed_store_id));
+diesel::joinable!(user_address -> user (user_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    order,
+    order_item,
+    payment_method,
+    product,
+    product_category,
+    product_discount,
+    product_item,
+    product_variant,
+    shipping_information,
+    shipping_method,
+    shopping_cart,
+    store,
+    store_invite,
+    user,
+    user_address,
+);
