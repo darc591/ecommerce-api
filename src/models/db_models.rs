@@ -133,14 +133,6 @@ pub struct Store {
 }
 
 #[derive(Queryable, Debug)]
-pub struct StoreInvite {
-    pub id: String,
-    pub valid: bool,
-    pub created_at: NaiveDateTime,
-    pub store_id: i32,
-}
-
-#[derive(Queryable, Debug)]
 pub struct UserAddres {
     pub id: i32,
     pub number: String,

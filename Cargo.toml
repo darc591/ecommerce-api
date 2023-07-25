@@ -25,3 +25,7 @@ bigdecimal = "0.4.1"
 derive_more = "0.99.17"
 validator = { version = "0.16.1", features = ["derive"] }
 lazy_static = "1.4.0"
+hmac = "0.12.1"
+rand = "0.8.5"
+sha2 = "0.10.7"
+hex = "0.4.3"

@@ -1,9 +1,12 @@
-use crate::{ config::db::Connection, schema::user::dsl::* };
+use crate::{config::db::Connection, schema::user::dsl::*, utils::password_hash::PasswordHash};
 
 use chrono::NaiveDateTime;
-use diesel::{ ExpressionMethods, Insertable, QueryDsl, QueryResult, Queryable, RunQueryDsl };
-use serde::{ Deserialize, Serialize };
-use validator::{ Validate, ValidationError };
+use diesel::{ExpressionMethods, Insertable, QueryDsl, QueryResult, Queryable, RunQueryDsl};
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use validator::{Validate, ValidationError, ValidationErrors};
+
+use super::store_invite::StoreInvite;
 
 #[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct User {
@@ -20,7 +23,14 @@ pub struct User {
     pub salt: String,
 }
 
-#[derive(Serialize, Deserialize, Validate)]
+#[derive(Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
+pub enum UserType {
+    CUSTOMER,
+    ADMIN,
+}
+#[derive(Serialize, Deserialize, Validate, Insertable)]
+#[diesel(table_name = user)]
 pub struct UserPayload {
     #[validate(length(max = 60))]
     first_name: String,
@@ -31,13 +41,40 @@ pub struct UserPayload {
     #[validate(length(min = 6))]
     password: String,
     invite_code: Option<String>,
-    type_: i32,
+    type_: UserType,
 }
 
 impl User {
-    // pub fn signup() {
-    //     if Self::find_by_email(user_email, conn)
-    // }
+    pub fn signup(user_payload: UserPayload, conn: &mut Connection) -> Result<UserPayload, String> {
+        //validation
+        match user_payload.validate() {
+            Ok(_) => (),
+            Err(e) => return Err(e.to_string()),
+        };
+        //find user
+        let existing_user = Self::find_by_email(&user_payload.email, conn);
+
+        if existing_user.is_ok() {
+            return Err("Email already exists".to_string());
+        }
+
+        let hashed_password = PasswordHash::create_hash(&user_payload.password);
+
+        match user_payload.type_ {
+            UserType::ADMIN => {
+                if let Some(invite_code) = user_payload.invite_code {
+                    if !StoreInvite::check_valid(&invite_code, conn) {
+                        Err("Invite code is not valid".to_string())
+                    } else {
+                        todo!()
+                    }
+                } else {
+                    Err("Invite code is required for admin users".to_string())
+                }
+            }
+            UserType::CUSTOMER => diesel::insert_into(user).values(records),
+        }
+    }
 
     pub fn find_all(conn: &mut Connection) -> QueryResult<Vec<User>> {
         user.order(id.asc()).load::<User>(conn)
