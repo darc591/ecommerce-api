@@ -3,9 +3,10 @@
 #![allow(unused)]
 #![allow(clippy::all)]
 
+use crate::{config::db::Connection, schema::*};
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
-use diesel::Queryable;
+use diesel::{PgConnection, Queryable};
 
 #[derive(Queryable, Debug)]
 pub struct Order {
@@ -137,21 +138,6 @@ pub struct StoreInvite {
     pub valid: bool,
     pub created_at: NaiveDateTime,
     pub store_id: i32,
-}
-
-#[derive(Queryable, Debug)]
-pub struct User {
-    pub id: i32,
-    pub email: String,
-    pub password: String,
-    pub type_: i32,
-    pub created_at: NaiveDateTime,
-    pub first_name: String,
-    pub last_login: NaiveDateTime,
-    pub last_name: String,
-    pub managed_store_id: Option<i32>,
-    pub updated_at: NaiveDateTime,
-    pub salt: String,
 }
 
 #[derive(Queryable, Debug)]
