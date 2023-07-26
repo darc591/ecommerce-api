@@ -8,7 +8,7 @@ use crate::{
     },
 };
 use actix_web::{post, web, HttpResponse, Result};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use validator::Validate;
 
 #[derive(Deserialize, Validate)]

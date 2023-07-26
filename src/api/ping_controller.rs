@@ -1,4 +1,4 @@
-use actix_web::{ get, HttpResponse };
+use actix_web::{get, HttpResponse};
 
 #[get("/ping")]
 async fn ping() -> HttpResponse {

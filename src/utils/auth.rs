@@ -1,7 +1,6 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
 use ::serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, encode, errors::Error, DecodingKey, EncodingKey, Header, Validation};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 #[derive(Serialize, Deserialize)]
 pub struct TokenClaims {
@@ -41,7 +40,7 @@ impl TokenClaims {
         }
     }
 
-    pub fn decode_token(token: String) -> Result<Self, Error> {
+    pub fn decode_token(token: &str) -> Result<Self, Error> {
         let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
         match decode::<Self>(

@@ -2,15 +2,15 @@ mod api;
 mod config;
 mod constants;
 mod error;
+mod middleware;
 mod models;
 mod schema;
 mod utils;
 
-use std::env;
-
-use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use env_logger::Env;
 use log::info;
+use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
