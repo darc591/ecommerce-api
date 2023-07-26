@@ -12,19 +12,19 @@ pub struct StoreInvite {
 }
 
 impl StoreInvite {
-    pub fn check_valid(invite_code: &str, conn: &mut Connection) -> bool {
+    pub fn check_valid(invite_code: &str, conn: &mut Connection) -> Option<i32> {
         let result: QueryResult<StoreInvite> =
             store_invite.find(invite_code).first::<StoreInvite>(conn);
 
         match result {
             Ok(result) => {
                 if result.valid {
-                    return true;
+                    Some(result.store_id)
                 } else {
-                    return false;
+                    None
                 }
             }
-            Err(_) => return false,
+            Err(_) => None,
         }
     }
 }

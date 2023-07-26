@@ -1,4 +1,4 @@
-use serde::{ Deserialize, Serialize };
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ResponseBody<T> {
@@ -17,13 +17,5 @@ impl<T> ResponseBody<T> {
 
 #[derive(Serialize, Deserialize)]
 pub struct TokenResponse {
-    token: String,
-}
-
-impl TokenResponse {
-    pub fn new(token: &str) -> Self {
-        Self {
-            token: token.to_string(),
-        }
-    }
+    pub token: String,
 }

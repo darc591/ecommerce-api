@@ -32,7 +32,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
             .app_data(web::Data::new(pool.clone()))
-            .configure(crate::config::app::config_services)
+            .configure(crate::config::routes::config_services)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

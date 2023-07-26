@@ -2,8 +2,8 @@ use hmac::{Hmac, Mac};
 use rand::distributions::{Alphanumeric, DistString};
 use sha2::Sha256;
 pub struct PasswordHash {
-    password_hash: String,
-    salt: String,
+    pub password_hash: String,
+    pub salt: String,
 }
 
 impl PasswordHash {
@@ -14,7 +14,7 @@ impl PasswordHash {
         }
     }
     pub fn create_hash(password: &str) -> PasswordHash {
-        let salt = Alphanumeric.sample_string(&mut rand::thread_rng(), 24);
+        let salt = Alphanumeric.sample_string(&mut rand::thread_rng(), 32);
 
         let mut mac: Hmac<Sha256> = Hmac::new_from_slice(salt.as_bytes()).unwrap();
 

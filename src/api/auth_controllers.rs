@@ -1,71 +1,60 @@
 use crate::{
     config::db::Pool,
-    constants::MESSAGE_OK,
+    constants::{MESSAGE_CREATED, MESSAGE_OK},
     error::ServiceError,
     models::{
-        response::{ResponseBody, TokenResponse},
-        user::{User, UserPayload},
+        response::ResponseBody,
+        user::{User, UserType},
     },
-    utils::password_hash::PasswordHash,
 };
-use actix_web::{web, HttpRequest, HttpResponse, Responder, Result};
-use log::info;
+use actix_web::{post, web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-#[derive(Serialize, Deserialize)]
-pub struct FindByEmail {
-    email: String,
+#[derive(Deserialize, Validate)]
+pub struct UserSignupPayload {
+    #[validate(length(max = 60))]
+    pub first_name: String,
+    #[validate(length(max = 60))]
+    pub last_name: String,
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 6))]
+    pub password: String,
+    pub invite_code: Option<String>,
+    pub type_: UserType,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct VerifyPassword {
-    password: String,
-}
-
-pub async fn signup(
-    body: web::Json<UserPayload>,
+#[post("/signup")]
+async fn signup(
+    body: web::Json<UserSignupPayload>,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
     match User::signup(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new("test", values))),
+        Ok(_) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, ""))),
         Err(message) => Err(ServiceError::InternalServerError {
             error_message: message.to_string(),
         }),
     }
 }
 
-pub async fn find_all(pool: web::Data<Pool>) -> impl Responder {
-    let results = User::find_all(&mut pool.get().unwrap()).unwrap();
-    HttpResponse::Ok().json(results)
+#[derive(Deserialize, Validate)]
+pub struct UserLoginPayload {
+    #[validate(email)]
+    pub email: String,
+    #[validate(length(min = 6))]
+    pub password: String,
 }
 
-pub async fn find_by_email(
-    body: web::Json<FindByEmail>,
+#[post("/login")]
+async fn login(
+    body: web::Json<UserLoginPayload>,
     pool: web::Data<Pool>,
 ) -> Result<HttpResponse, ServiceError> {
-    match User::find_by_email(&body.email, &mut pool.get().unwrap()) {
-        Ok(users) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, users))),
-        Err(message) => Err(ServiceError::NotFound {
-            error_message: "Email not found".to_string(),
+    match User::login(body.into_inner(), &mut pool.get().unwrap()) {
+        Ok(token_res) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, token_res))),
+        Err(e) => Err(ServiceError::Unauthorized {
+            error_message: e.to_string(),
         }),
-    }
-}
-
-pub async fn verify_password(
-    body: web::Json<VerifyPassword>,
-) -> Result<HttpResponse, ServiceError> {
-    let attemp_password = body.into_inner().password;
-
-    let my_password: PasswordHash = PasswordHash::new(
-        "65fd80510930e91125c582bd3b221314e6e9e9a2cb4837d5d211d0e0ee44fa03",
-        "Z8mzT3pRa5yVD4jdHyZWA54d",
-    );
-
-    if my_password.verify_password(&attemp_password) {
-        Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, attemp_password)))
-    } else {
-        Err(ServiceError::Unauthorized {
-            error_message: "not authorized".to_string(),
-        })
     }
 }
