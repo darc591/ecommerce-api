@@ -3,7 +3,7 @@ use crate::{
     api::auth_controllers::{UserLoginPayload, UserSignupPayload},
     config::db::Connection,
     schema::user::dsl::*,
-    utils::password_hash::{self, PasswordHash},
+    utils::{auth::TokenClaims, password_hash::PasswordHash},
 };
 use chrono::NaiveDateTime;
 use diesel::{ExpressionMethods, Insertable, QueryDsl, QueryResult, Queryable, RunQueryDsl};
@@ -137,16 +137,22 @@ impl User {
                         .get_result::<SystemTime>(conn)
                         .expect("Error getting system time");
 
-                    let result = diesel::update(user)
+                    diesel::update(user)
                         .filter(id.eq(curr_user.id))
                         .set(last_login.eq(now))
                         .execute(conn)
                         .expect("Error updating last login");
 
-                    //implement jwt
-                    Ok(TokenResponse {
-                        token: "123456789456132".to_string(),
-                    })
+                    let token_claims = TokenClaims::new(
+                        curr_user.type_,
+                        &curr_user.id.to_string(),
+                        &curr_user.first_name,
+                        &curr_user.last_name,
+                    );
+
+                    let token_str = token_claims.sign_token().unwrap();
+
+                    Ok(TokenResponse { token: token_str })
                 }
             }
             Err(_) => Err("User does not exist".to_string()),
