@@ -12,6 +12,7 @@ use env_logger::Env;
 use log::info;
 use std::env;
 
+// test commit
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "debug");
