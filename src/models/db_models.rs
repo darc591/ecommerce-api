@@ -131,20 +131,3 @@ pub struct Store {
     pub logo_url: Option<String>,
     pub updated_at: NaiveDateTime,
 }
-
-#[derive(Queryable, Debug)]
-pub struct UserAddres {
-    pub id: i32,
-    pub number: String,
-    pub city: String,
-    pub country: String,
-    pub deleted: bool,
-    pub address_line1: String,
-    pub address_line2: Option<String>,
-    pub created_at: NaiveDateTime,
-    pub phone_country_code: Option<String>,
-    pub phone_number: Option<String>,
-    pub postal_code: String,
-    pub updated_at: NaiveDateTime,
-    pub user_id: i32,
-}

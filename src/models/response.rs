@@ -15,7 +15,12 @@ impl<T> ResponseBody<T> {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct TokenResponse {
     pub token: String,
+}
+
+#[derive(Serialize)]
+pub struct IDResponse<T> {
+    pub id: T,
 }

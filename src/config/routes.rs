@@ -7,5 +7,11 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
             web::scope("auth")
                 .service(auth_controllers::signup)
                 .service(auth_controllers::login),
+        )
+        .service(
+            web::scope("address")
+                .service(address_controllers::find_address)
+                .service(address_controllers::list_addresses)
+                .service(address_controllers::create_address),
         );
 }
