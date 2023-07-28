@@ -12,6 +12,8 @@ pub fn config_services(cfg: &mut web::ServiceConfig) {
             web::scope("address")
                 .service(address_controllers::find_address)
                 .service(address_controllers::list_addresses)
-                .service(address_controllers::create_address),
+                .service(address_controllers::create_address)
+                .service(address_controllers::edit_address)
+                .service(address_controllers::delete_address),
         );
 }

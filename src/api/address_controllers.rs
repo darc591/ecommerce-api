@@ -1,6 +1,6 @@
 use crate::{
     config::db::Pool,
-    constants::{MESSAGE_CREATED, MESSAGE_OK},
+    constants::{MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED},
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::{
@@ -8,7 +8,7 @@ use crate::{
         response::{IDResponse, ResponseBody},
     },
 };
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{delete, get, post, put, web, HttpResponse};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
@@ -90,5 +90,38 @@ async fn create_address(
     }
 }
 
-//TODO editar
-//TODO excluir
+#[put("/{id}")]
+async fn edit_address(
+    path: web::Path<i32>,
+    body: web::Json<CreateAddressBody>,
+    auth: AuthMiddleware,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, ServiceError> {
+    let user = auth.user;
+    match UserAddres::edit(
+        path.into_inner(),
+        user.sub.parse().unwrap(),
+        body.into_inner(),
+        &mut pool.get().unwrap(),
+    ) {
+        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_UPDATED, ""))),
+        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+    }
+}
+
+#[delete("/{id}")]
+async fn delete_address(
+    path: web::Path<i32>,
+    auth: AuthMiddleware,
+    pool: web::Data<Pool>,
+) -> Result<HttpResponse, ServiceError> {
+    let user = auth.user;
+    match UserAddres::delete(
+        path.into_inner(),
+        user.sub.parse().unwrap(),
+        &mut pool.get().unwrap(),
+    ) {
+        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
+        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+    }
+}

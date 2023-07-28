@@ -9,7 +9,6 @@ mod utils;
 
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use env_logger::Env;
-use log::info;
 use std::env;
 
 // test commit
@@ -22,8 +21,7 @@ async fn main() -> std::io::Result<()> {
 
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
-    info!("starting");
-
+    env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set!");
 
     let pool = config::db::init_db_pool(&db_url);
