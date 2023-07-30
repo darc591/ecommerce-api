@@ -4,24 +4,24 @@ diesel::table! {
     order (id) {
         id -> Int4,
         status -> Int2,
+        total_price -> Numeric,
+        total_discount -> Nullable<Numeric>,
         created_at -> Timestamp,
         customer_id -> Int4,
+        store_id -> Int4,
         payment_method_id -> Int4,
         shipping_information_id -> Int4,
-        store_id -> Int4,
-        total_discount -> Nullable<Numeric>,
-        total_price -> Numeric,
     }
 }
 
 diesel::table! {
     order_item (id) {
         id -> Int4,
+        unit_price -> Numeric,
         quantity -> Int4,
-        order_id -> Nullable<Int4>,
         product_item_id -> Int4,
         shopping_cart_id -> Nullable<Int4>,
-        unit_price -> Numeric,
+        order_id -> Nullable<Int4>,
     }
 }
 
@@ -32,8 +32,8 @@ diesel::table! {
         inactive -> Bool,
         deleted -> Bool,
         created_at -> Timestamp,
-        store_id -> Int4,
         updated_at -> Timestamp,
+        store_id -> Int4,
     }
 }
 
@@ -42,8 +42,8 @@ diesel::table! {
         id -> Int4,
         name -> Text,
         deleted -> Bool,
-        category_id -> Int4,
         store_id -> Int4,
+        category_id -> Int4,
     }
 }
 
@@ -69,17 +69,17 @@ diesel::table! {
     product_item (id) {
         id -> Int4,
         sku -> Nullable<Text>,
+        image_url -> Nullable<Text>,
         description -> Nullable<Text>,
         price -> Numeric,
         stock -> Int4,
-        deleted -> Bool,
         created_at -> Timestamp,
-        discount_id -> Nullable<Int4>,
-        image_url -> Nullable<Text>,
-        product_id -> Int4,
-        store_id -> Int4,
         updated_at -> Timestamp,
+        deleted -> Bool,
         variant_id -> Nullable<Int4>,
+        product_id -> Int4,
+        discount_id -> Nullable<Int4>,
+        store_id -> Int4,
     }
 }
 
@@ -96,12 +96,12 @@ diesel::table! {
     shipping_information (id) {
         id -> Int4,
         status -> Int4,
-        address_id -> Int4,
-        created_at -> Timestamp,
-        shipping_method_id -> Int4,
-        shipping_price -> Numeric,
         tracking_number -> Nullable<Text>,
+        created_at -> Timestamp,
         updated_at -> Timestamp,
+        shipping_price -> Numeric,
+        address_id -> Int4,
+        shipping_method_id -> Int4,
     }
 }
 
@@ -112,17 +112,17 @@ diesel::table! {
         inactive -> Bool,
         deleted -> Bool,
         created_at -> Timestamp,
-        store_id -> Int4,
         updated_at -> Timestamp,
+        store_id -> Int4,
     }
 }
 
 diesel::table! {
     shopping_cart (id) {
         id -> Int4,
-        created_at -> Timestamp,
         customer_id -> Int4,
         store_id -> Int4,
+        created_at -> Timestamp,
     }
 }
 
@@ -130,8 +130,8 @@ diesel::table! {
     store (id) {
         id -> Int4,
         name -> Text,
-        created_at -> Timestamp,
         logo_url -> Nullable<Text>,
+        created_at -> Timestamp,
         updated_at -> Timestamp,
     }
 }
@@ -150,31 +150,31 @@ diesel::table! {
         id -> Int4,
         email -> Text,
         password -> Text,
+        salt -> Text,
+        first_name -> Text,
+        last_name -> Text,
         #[sql_name = "type"]
         type_ -> Int4,
         created_at -> Timestamp,
-        first_name -> Text,
-        last_login -> Timestamp,
-        last_name -> Text,
-        managed_store_id -> Nullable<Int4>,
         updated_at -> Timestamp,
-        salt -> Text,
+        last_login -> Timestamp,
+        managed_store_id -> Nullable<Int4>,
     }
 }
 
 diesel::table! {
     user_address (id) {
         id -> Int4,
+        address_line1 -> Text,
+        address_line2 -> Nullable<Text>,
         number -> Text,
         city -> Text,
         country -> Text,
-        deleted -> Bool,
-        address_line1 -> Text,
-        address_line2 -> Nullable<Text>,
-        created_at -> Timestamp,
+        postal_code -> Text,
         phone_country_code -> Nullable<Text>,
         phone_number -> Nullable<Text>,
-        postal_code -> Text,
+        deleted -> Bool,
+        created_at -> Timestamp,
         updated_at -> Timestamp,
         user_id -> Int4,
     }

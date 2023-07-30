@@ -1,13 +1,10 @@
 use crate::{
-    config::db::Pool,
-    constants::{MESSAGE_CREATED, MESSAGE_OK},
+    db::{ Pool, user },
+    constants::{ MESSAGE_CREATED, MESSAGE_OK },
     error::ServiceError,
-    models::{
-        response::ResponseBody,
-        user::{User, UserType},
-    },
+    models::{ response::ResponseBody, user::{ User, UserType } },
 };
-use actix_web::{post, web, HttpResponse, Result};
+use actix_web::{ post, web, HttpResponse, Result };
 use serde::Deserialize;
 use validator::Validate;
 
@@ -28,13 +25,14 @@ pub struct UserSignupPayload {
 #[post("/signup")]
 async fn signup(
     body: web::Json<UserSignupPayload>,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    match User::signup(body.into_inner(), &mut pool.get().unwrap()) {
+    match user::signup(body.into_inner(), &mut pool.get().unwrap()) {
         Ok(_) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, ""))),
-        Err(message) => Err(ServiceError::InternalServerError {
-            error_message: message.to_string(),
-        }),
+        Err(message) =>
+            Err(ServiceError::InternalServerError {
+                error_message: message.to_string(),
+            }),
     }
 }
 
@@ -49,12 +47,13 @@ pub struct UserLoginPayload {
 #[post("/login")]
 async fn login(
     body: web::Json<UserLoginPayload>,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    match User::login(body.into_inner(), &mut pool.get().unwrap()) {
+    match user::login(body.into_inner(), &mut pool.get().unwrap()) {
         Ok(token_res) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, token_res))),
-        Err(e) => Err(ServiceError::Unauthorized {
-            error_message: e.to_string(),
-        }),
+        Err(e) =>
+            Err(ServiceError::Unauthorized {
+                error_message: e.to_string(),
+            }),
     }
 }

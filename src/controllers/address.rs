@@ -1,14 +1,11 @@
 use crate::{
-    config::db::Pool,
-    constants::{MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED},
+    db::{ Pool, address },
+    constants::{ MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
-    models::{
-        address::UserAddres,
-        response::{IDResponse, ResponseBody},
-    },
+    models::response::{ ResponseBody, IDResponse },
 };
-use actix_web::{delete, get, post, put, web, HttpResponse};
+use actix_web::{ delete, get, post, put, web, HttpResponse };
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Deserialize;
@@ -22,33 +19,31 @@ lazy_static! {
 async fn find_address(
     path: web::Path<i32>,
     auth: AuthMiddleware,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let address_id = path.into_inner();
     let user = auth.user;
-    match UserAddres::find(
-        address_id,
-        user.sub.parse().unwrap(),
-        &mut pool.get().unwrap(),
-    ) {
+    match address::find(address_id, user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
-        Err(e) => Err(ServiceError::NotFound {
-            error_message: e.to_string(),
-        }),
+        Err(e) =>
+            Err(ServiceError::NotFound {
+                error_message: e.to_string(),
+            }),
     }
 }
 
 #[get("")]
 async fn list_addresses(
     auth: AuthMiddleware,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match UserAddres::list(user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match address::list(user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
-        Err(e) => Err(ServiceError::NotFound {
-            error_message: e.to_string(),
-        }),
+        Err(e) =>
+            Err(ServiceError::NotFound {
+                error_message: e.to_string(),
+            }),
     }
 }
 
@@ -75,14 +70,10 @@ pub struct CreateAddressBody {
 async fn create_address(
     body: web::Json<CreateAddressBody>,
     auth: AuthMiddleware,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match UserAddres::create(
-        body.into_inner(),
-        user.sub.parse().unwrap(),
-        &mut pool.get().unwrap(),
-    ) {
+    match address::create(body.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(id) => {
             Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, IDResponse { id })))
         }
@@ -95,15 +86,17 @@ async fn edit_address(
     path: web::Path<i32>,
     body: web::Json<CreateAddressBody>,
     auth: AuthMiddleware,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match UserAddres::edit(
-        path.into_inner(),
-        user.sub.parse().unwrap(),
-        body.into_inner(),
-        &mut pool.get().unwrap(),
-    ) {
+    match
+        address::edit(
+            path.into_inner(),
+            user.sub.parse().unwrap(),
+            body.into_inner(),
+            &mut pool.get().unwrap()
+        )
+    {
         Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_UPDATED, ""))),
         Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
     }
@@ -113,14 +106,10 @@ async fn edit_address(
 async fn delete_address(
     path: web::Path<i32>,
     auth: AuthMiddleware,
-    pool: web::Data<Pool>,
+    pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match UserAddres::delete(
-        path.into_inner(),
-        user.sub.parse().unwrap(),
-        &mut pool.get().unwrap(),
-    ) {
+    match address::delete(path.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
         Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
     }

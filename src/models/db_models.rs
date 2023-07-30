@@ -3,10 +3,10 @@
 #![allow(unused)]
 #![allow(clippy::all)]
 
-use crate::{config::db::Connection, schema::*};
+use crate::{ db::Connection, schema::* };
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
-use diesel::{PgConnection, Queryable};
+use diesel::{ PgConnection, Queryable };
 
 #[derive(Queryable, Debug)]
 pub struct Order {

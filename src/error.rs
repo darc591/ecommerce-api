@@ -1,22 +1,21 @@
-use actix_web::{
-    error,
-    http::{header::ContentType, StatusCode},
-    HttpResponse,
-};
-use derive_more::{Display, Error};
+use actix_web::{ error, http::{ header::ContentType, StatusCode }, HttpResponse };
+use derive_more::{ Display, Error };
 
 use crate::models::response::ResponseBody;
 
 #[derive(Debug, Display, Error)]
 pub enum ServiceError {
-    #[display(fmt = "{error_message}")]
-    Unauthorized { error_message: String },
+    #[display(fmt = "{error_message}")] Unauthorized {
+        error_message: String,
+    },
 
-    #[display(fmt = "{error_message}")]
-    InternalServerError { error_message: String },
+    #[display(fmt = "{error_message}")] InternalServerError {
+        error_message: String,
+    },
 
-    #[display(fmt = "{error_message}")]
-    NotFound { error_message: String },
+    #[display(fmt = "{error_message}")] NotFound {
+        error_message: String,
+    },
 }
 
 impl error::ResponseError for ServiceError {
