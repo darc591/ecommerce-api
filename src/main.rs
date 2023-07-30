@@ -12,16 +12,21 @@ use std::env;
 
 fn routes(app: &mut web::ServiceConfig) {
     app.service(
-        web::scope("auth").service(controllers::auth::signup).service(controllers::auth::login)
-    ).service(
-        web
-            ::scope("address")
-            .service(controllers::address::find_address)
-            .service(controllers::address::list_addresses)
-            .service(controllers::address::create_address)
-            .service(controllers::address::edit_address)
-            .service(controllers::address::delete_address)
-    );
+            web::scope("auth")
+                .service(controllers::auth::signup)
+                .service(controllers::auth::login)
+        )
+        .service(
+            web::scope("address")
+                .service(controllers::address::find_address)
+                .service(controllers::address::list_addresses)
+                .service(controllers::address::create_address)
+                .service(controllers::address::edit_address)
+                .service(controllers::address::delete_address)
+        )
+        .service(
+            web::scope("store")
+                .service(controllers::store::create_store));
 }
 
 #[actix_web::main]
@@ -44,7 +49,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .app_data(web::Data::new(pool.clone()))
             .configure(routes)
-    })
+        })
         .bind(&bind_address)
         .unwrap_or_else(|_| panic!("Could not bind to server address {}", &bind_address))
         .run().await

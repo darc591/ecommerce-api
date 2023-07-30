@@ -25,10 +25,7 @@ async fn find_address(
     let user = auth.user;
     match address::find(address_id, user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
-        Err(e) =>
-            Err(ServiceError::NotFound {
-                error_message: e.to_string(),
-            }),
+        Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
 }
 
@@ -40,10 +37,7 @@ async fn list_addresses(
     let user = auth.user;
     match address::list(user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
-        Err(e) =>
-            Err(ServiceError::NotFound {
-                error_message: e.to_string(),
-            }),
+        Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
 }
 

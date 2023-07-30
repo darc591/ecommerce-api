@@ -36,6 +36,5 @@ pub struct InsertableUser {
     pub first_name: String,
     pub last_name: String,
     pub managed_store_id: Option<i32>,
-    pub updated_at: SystemTime,
     pub salt: String,
 }

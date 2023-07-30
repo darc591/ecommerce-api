@@ -9,13 +9,13 @@ use crate::{
 use diesel::{ sql_query, sql_types::Text, QueryResult, RunQueryDsl, ExpressionMethods };
 use validator::Validate;
 
-fn find_by_email(user_email: &str, conn: &mut Connection) -> QueryResult<User> {
+pub fn find_by_email(user_email: &str, conn: &mut Connection) -> QueryResult<User> {
     return sql_query("SELECT * from public.user WHERE email = $1")
         .bind::<Text, _>(user_email)
         .get_result::<User>(conn);
 }
 
-pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<String, String> {
+pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<i32, String> {
     use crate::schema::user::dsl::*;
     match payload.validate() {
         Ok(_) => (),
@@ -34,11 +34,6 @@ pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<Strin
 
     let insertable_user: InsertableUser;
 
-    let now = diesel
-        ::select(diesel::dsl::now)
-        .get_result::<SystemTime>(conn)
-        .expect("Error getting system time");
-
     match payload.type_ {
         UserType::ADMIN => {
             if let Some(invite_code) = payload.invite_code {
@@ -50,7 +45,6 @@ pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<Strin
                         managed_store_id: Some(store_id),
                         password: hashed_password.password_hash,
                         salt: hashed_password.salt,
-                        updated_at: now,
                         type_: UserType::ADMIN as i32,
                     };
                 } else {
@@ -68,16 +62,15 @@ pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<Strin
                 managed_store_id: None,
                 password: hashed_password.password_hash,
                 salt: hashed_password.salt,
-                updated_at: now,
                 type_: UserType::CUSTOMER as i32,
             };
         }
     }
 
-    let result = diesel::insert_into(user).values(insertable_user).execute(conn);
+    let result = diesel::insert_into(user).values(insertable_user).returning(id).get_result(conn);
 
     match result {
-        Ok(_) => Ok("Created".to_string()),
+        Ok(new_id) => Ok(new_id),
         Err(_) => Err("Error creating user".to_string()),
     }
 }

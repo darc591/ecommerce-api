@@ -32,17 +32,6 @@ pub struct OrderItem {
 }
 
 #[derive(Queryable, Debug)]
-pub struct PaymentMethod {
-    pub id: i32,
-    pub name: String,
-    pub inactive: bool,
-    pub deleted: bool,
-    pub created_at: NaiveDateTime,
-    pub store_id: i32,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Queryable, Debug)]
 pub struct Product {
     pub id: i32,
     pub name: String,
@@ -105,29 +94,9 @@ pub struct ShippingInformation {
 }
 
 #[derive(Queryable, Debug)]
-pub struct ShippingMethod {
-    pub id: i32,
-    pub name: String,
-    pub inactive: bool,
-    pub deleted: bool,
-    pub created_at: NaiveDateTime,
-    pub store_id: i32,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Queryable, Debug)]
 pub struct ShoppingCart {
     pub id: i32,
     pub created_at: NaiveDateTime,
     pub customer_id: i32,
     pub store_id: i32,
-}
-
-#[derive(Queryable, Debug)]
-pub struct Store {
-    pub id: i32,
-    pub name: String,
-    pub created_at: NaiveDateTime,
-    pub logo_url: Option<String>,
-    pub updated_at: NaiveDateTime,
 }

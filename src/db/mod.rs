@@ -1,5 +1,6 @@
 pub mod user;
 pub mod address;
+pub mod store;
 mod store_invite;
 
 use diesel::{ pg::PgConnection, r2d2::{ self, ConnectionManager } };
