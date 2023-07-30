@@ -1,10 +1,8 @@
 use chrono::NaiveDateTime;
-use diesel::{ QueryableByName, Queryable, Insertable };
+use diesel::{ QueryableByName, Queryable, Insertable, Identifiable };
 use serde::Serialize;
 use serde_repr::{ Deserialize_repr, Serialize_repr };
-use std::time::SystemTime;
-
-#[derive(Serialize, Queryable, Debug, QueryableByName)]
+#[derive(Serialize, Queryable, Debug, QueryableByName, Identifiable)]
 #[diesel(table_name = crate::schema::user)]
 pub struct User {
     pub id: i32,

@@ -3,7 +3,7 @@ use crate::{
     constants::{ MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
-    models::response::{ ResponseBody, IDResponse },
+    models::response::ResponseBody,
 };
 use actix_web::{ delete, get, post, put, web, HttpResponse };
 use lazy_static::lazy_static;
@@ -68,10 +68,10 @@ async fn create_address(
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
     match address::create(body.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
-        Ok(id) => {
-            Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, IDResponse { id })))
+        Ok(id_res) => {
+            Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id_res)))
         }
-        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+        Err(e) => Err(e),
     }
 }
 
@@ -91,8 +91,8 @@ async fn edit_address(
             &mut pool.get().unwrap()
         )
     {
-        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_UPDATED, ""))),
-        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_UPDATED, ()))),
+        Err(e) => Err(e),
     }
 }
 
@@ -104,7 +104,7 @@ async fn delete_address(
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
     match address::delete(path.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
-        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
-        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ()))),
+        Err(e) => Err(e),
     }
 }

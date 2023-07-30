@@ -1,30 +1,59 @@
 use crate::{
     controllers::store::NewStorePayload,
     models::{
+        response::IDResponse,
         store::InsertableStore,
         user::{ InsertableUser, UserType },
         payment_method::InsertablePaymentMethod,
-        shipping_method::InsertableShippingMethod,
+        shipping::InsertableShippingMethod,
     },
-    utils::password_hash::PasswordHash,
+    utils::{password_hash::PasswordHash, validation::validate},
+    error::ServiceError,
 };
-use diesel::RunQueryDsl;
-use validator::Validate;
+use diesel::prelude::*;
 use super::{ Connection, user as db_user };
 
-pub fn create(payload: NewStorePayload, conn: &mut Connection) -> Result<i32, String> {
-    use crate::schema::{ store, user, payment_method, shipping_method };
-    match payload.validate() {
-        Ok(_) => (),
-        Err(e) => {
-            return Err(e.to_string());
+pub fn check_store_admin(
+    store_id: i32,
+    user_id: i32,
+    conn: &mut Connection
+) -> Result<(), ServiceError> {
+    use crate::schema::{ user, store };
+
+    let store_admins: QueryResult<Vec<i32>> = store::table
+        .inner_join(user::table)
+        .filter(user::dsl::managed_store_id.eq(store_id))
+        .select(user::dsl::id)
+        .load::<i32>(conn);
+
+    match store_admins {
+        Ok(admin_ids) => {
+            if admin_ids.is_empty() {
+                return Err(ServiceError::NotFound { error_message: "Store not found".to_string() });
+            } else if admin_ids.contains(&user_id) {
+                return Ok(());
+            } else {
+                Err(ServiceError::Forbidden {
+                    error_message: "User without permissions for this store".to_string(),
+                })
+            }
         }
+        Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
     }
+}
+
+pub fn create(
+    payload: NewStorePayload,
+    conn: &mut Connection
+) -> Result<IDResponse<i32>, ServiceError> {
+    use crate::schema::{ store, user, payment_method, shipping_method };
+
+    validate(&payload)?;
 
     let existing_user = db_user::find_by_email(&payload.email, conn);
 
     if existing_user.is_ok() {
-        return Err("Email already exists".to_string());
+        return Err(ServiceError::Forbidden { error_message: "Email already exists".to_string() });
     }
 
     let new_store = InsertableStore {
@@ -55,7 +84,9 @@ pub fn create(payload: NewStorePayload, conn: &mut Connection) -> Result<i32, St
             let user_result = diesel::insert_into(user::dsl::user).values(new_user).execute(conn);
 
             if user_result.is_err() {
-                return Err("Error creating user".to_string());
+                return Err(ServiceError::InternalServerError {
+                    error_message: user_result.unwrap_err().to_string(),
+                });
             }
 
             let default_payment_methods: Vec<InsertablePaymentMethod> = vec![
@@ -78,7 +109,9 @@ pub fn create(payload: NewStorePayload, conn: &mut Connection) -> Result<i32, St
                 .execute(conn);
 
             if payment_method_result.is_err() {
-                return Err("Error creating default payment methods".to_string());
+                return Err(ServiceError::InternalServerError {
+                    error_message: payment_method_result.unwrap_err().to_string(),
+                });
             }
 
             let default_shipping_methods: Vec<InsertableShippingMethod> = vec!["Ups", "FedEx"]
@@ -95,10 +128,12 @@ pub fn create(payload: NewStorePayload, conn: &mut Connection) -> Result<i32, St
                 .execute(conn);
 
             if shipping_method_result.is_err() {
-                return Err("Error creating default shipping methods".to_string());
+                return Err(ServiceError::InternalServerError {
+                    error_message: shipping_method_result.unwrap_err().to_string(),
+                });
             }
-            return Ok(new_store_id);
+            return Ok(IDResponse { id: new_store_id });
         }
-        Err(_) => Err("Error creating store".to_string()),
+        Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
     }
 }

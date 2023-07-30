@@ -13,7 +13,15 @@ pub enum ServiceError {
         error_message: String,
     },
 
+    #[display(fmt = "{error_message}")] BadRequest {
+        error_message: String,
+    },
+
     #[display(fmt = "{error_message}")] NotFound {
+        error_message: String,
+    },
+
+    #[display(fmt = "{error_message}")] Forbidden {
         error_message: String,
     },
 }
@@ -23,7 +31,9 @@ impl error::ResponseError for ServiceError {
         match *self {
             ServiceError::Unauthorized { .. } => StatusCode::UNAUTHORIZED,
             ServiceError::InternalServerError { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+            ServiceError::BadRequest { .. } => StatusCode::BAD_REQUEST,
             ServiceError::NotFound { .. } => StatusCode::NOT_FOUND,
+            ServiceError::Forbidden { .. } => StatusCode::FORBIDDEN
         }
     }
     fn error_response(&self) -> HttpResponse {

@@ -4,7 +4,7 @@ use validator::Validate;
 use crate::{
     db::{ Pool, store },
     error::ServiceError,
-    models::response::{ ResponseBody, IDResponse },
+    models::response::ResponseBody,
     constants::MESSAGE_CREATED,
 };
 
@@ -29,8 +29,7 @@ async fn create_store(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match store::create(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(id) =>
-            Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, IDResponse { id }))),
-        Err(e) => Err(ServiceError::InternalServerError { error_message: e }),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Err(e) => Err(e),
     }
 }

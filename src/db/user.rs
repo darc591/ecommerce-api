@@ -2,32 +2,30 @@ use std::time::SystemTime;
 
 use super::{ Connection, store_invite };
 use crate::{
-    models::{ user::{ User, InsertableUser, UserType }, response::TokenResponse },
+    models::{ user::{ User, InsertableUser, UserType }, response::{ TokenResponse, IDResponse } },
     controllers::auth::{ UserSignupPayload, UserLoginPayload },
-    utils::{ password_hash::PasswordHash, auth::TokenClaims },
+    utils::{ password_hash::PasswordHash, jwt_auth::TokenClaims, validation::validate },
+    error::ServiceError,
 };
-use diesel::{ sql_query, sql_types::Text, QueryResult, RunQueryDsl, ExpressionMethods };
-use validator::Validate;
+use diesel::{ QueryResult, RunQueryDsl, ExpressionMethods, QueryDsl };
 
 pub fn find_by_email(user_email: &str, conn: &mut Connection) -> QueryResult<User> {
-    return sql_query("SELECT * from public.user WHERE email = $1")
-        .bind::<Text, _>(user_email)
-        .get_result::<User>(conn);
+    use crate::schema::user::dsl::*;
+    user.filter(email.eq(user_email)).get_result(conn)
 }
 
-pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<i32, String> {
+pub fn signup(
+    payload: UserSignupPayload,
+    conn: &mut Connection
+) -> Result<IDResponse<i32>, ServiceError> {
     use crate::schema::user::dsl::*;
-    match payload.validate() {
-        Ok(_) => (),
-        Err(e) => {
-            return Err(e.to_string());
-        }
-    }
-    //find user
+
+    validate(&payload)?;
+
     let existing_user = find_by_email(&payload.email, conn);
 
     if existing_user.is_ok() {
-        return Err("Email already exists".to_string());
+        return Err(ServiceError::Forbidden { error_message: "Email already exists".to_string() });
     }
 
     let hashed_password = PasswordHash::create_hash(&payload.password);
@@ -48,10 +46,14 @@ pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<i32, 
                         type_: UserType::ADMIN as i32,
                     };
                 } else {
-                    return Err("Invite code is not valid".to_string());
+                    return Err(ServiceError::Forbidden {
+                        error_message: "Invite code is not valid".to_string(),
+                    });
                 }
             } else {
-                return Err("Invite code is required for admin users".to_string());
+                return Err(ServiceError::Forbidden {
+                    error_message: "Invite code is required for admin users".to_string(),
+                });
             }
         }
         UserType::CUSTOMER => {
@@ -67,22 +69,25 @@ pub fn signup(payload: UserSignupPayload, conn: &mut Connection) -> Result<i32, 
         }
     }
 
-    let result = diesel::insert_into(user).values(insertable_user).returning(id).get_result(conn);
+    let result = diesel
+        ::insert_into(user)
+        .values(insertable_user)
+        .returning(id)
+        .get_result::<i32>(conn);
 
     match result {
-        Ok(new_id) => Ok(new_id),
-        Err(_) => Err("Error creating user".to_string()),
+        Ok(new_id) => Ok(IDResponse { id: new_id }),
+        Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
     }
 }
 
-pub fn login(payload: UserLoginPayload, conn: &mut Connection) -> Result<TokenResponse, String> {
+pub fn login(
+    payload: UserLoginPayload,
+    conn: &mut Connection
+) -> Result<TokenResponse, ServiceError> {
     use crate::schema::user::dsl::*;
-    match payload.validate() {
-        Ok(_) => (),
-        Err(e) => {
-            return Err(e.to_string());
-        }
-    }
+
+    validate(&payload)?;
 
     let existing_user = find_by_email(&payload.email, conn);
 
@@ -93,7 +98,7 @@ pub fn login(payload: UserLoginPayload, conn: &mut Connection) -> Result<TokenRe
             let matches = user_password.verify_password(&payload.password);
 
             if !matches {
-                Err("Invalid password".to_string())
+                Err(ServiceError::Unauthorized { error_message: "Invalid password".to_string() })
             } else {
                 let now = diesel
                     ::select(diesel::dsl::now)
@@ -119,6 +124,6 @@ pub fn login(payload: UserLoginPayload, conn: &mut Connection) -> Result<TokenRe
                 Ok(TokenResponse { token: token_str })
             }
         }
-        Err(_) => Err("User does not exist".to_string()),
+        Err(_) => Err(ServiceError::NotFound { error_message: "User does not exist".to_string() }),
     }
 }

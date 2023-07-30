@@ -8,6 +8,7 @@ mod controllers;
 mod db;
 
 use actix_web::{ middleware::Logger, web, App, HttpServer };
+use log::info;
 use std::env;
 
 fn routes(app: &mut web::ServiceConfig) {
@@ -26,16 +27,16 @@ fn routes(app: &mut web::ServiceConfig) {
         )
         .service(
             web::scope("store")
-                .service(controllers::store::create_store));
+                .service(controllers::store::create_store)
+                .service(controllers::product::create_product_category)
+            );
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv::dotenv().ok();
 
-    if env::var("RUST_LOG").ok().is_none() {
-        env::set_var("RUST_LOG", "conduit=debug,actix_web=info");
-    }
+    env::set_var("RUST_LOG", "info");
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set!");
 
@@ -43,6 +44,9 @@ async fn main() -> std::io::Result<()> {
 
     let bind_address = env::var("BIND_ADDRESS").expect("BIND_ADDRESS must be set");
 
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    info!("logando!");
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())

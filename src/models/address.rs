@@ -1,7 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::{ Insertable, Queryable, QueryableByName };
 use serde::{ Deserialize, Serialize };
-use std::time::SystemTime;
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
 pub struct UserAddres {
@@ -43,8 +42,6 @@ pub struct InsertableAddress {
     pub deleted: bool,
     pub address_line1: String,
     pub address_line2: Option<String>,
-    pub created_at: SystemTime,
-    pub updated_at: SystemTime,
     pub phone_country_code: Option<String>,
     pub phone_number: Option<String>,
     pub postal_code: String,

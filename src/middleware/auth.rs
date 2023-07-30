@@ -1,7 +1,7 @@
 use actix_web::FromRequest;
 use futures_util::future::{err, ok, Ready};
 
-use crate::{error::ServiceError, utils::auth::TokenClaims};
+use crate::{error::ServiceError, utils::jwt_auth::TokenClaims};
 
 pub struct AuthMiddleware {
     pub user: TokenClaims,

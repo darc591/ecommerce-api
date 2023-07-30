@@ -28,8 +28,8 @@ async fn signup(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match user::signup(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(_) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, ""))),
-        Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Err(e) => Err(e),
     }
 }
 
@@ -48,6 +48,6 @@ async fn login(
 ) -> Result<HttpResponse, ServiceError> {
     match user::login(body.into_inner(), &mut pool.get().unwrap()) {
         Ok(token_res) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, token_res))),
-        Err(e) => Err(ServiceError::Unauthorized { error_message: e.to_string() }),
+        Err(e) => Err(e),
     }
 }
