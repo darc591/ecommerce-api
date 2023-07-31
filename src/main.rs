@@ -28,8 +28,14 @@ fn routes(app: &mut web::ServiceConfig) {
         .service(
             web::scope("store")
                 .service(controllers::store::create_store)
+        )
+        .service(
+            web::scope("product")
                 .service(controllers::product::create_product_category)
-            );
+                .service(controllers::product::create_product_variant)
+                .service(controllers::product::create_product)
+        );
+        
 }
 
 #[actix_web::main]
