@@ -7,7 +7,7 @@ use crate::{
         payment_method::InsertablePaymentMethod,
         shipping::InsertableShippingMethod,
     },
-    utils::{password_hash::PasswordHash, validation::validate},
+    utils::{ password_hash::PasswordHash, validation::validate },
     error::ServiceError,
 };
 use diesel::prelude::*;

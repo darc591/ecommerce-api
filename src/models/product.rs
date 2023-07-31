@@ -1,6 +1,6 @@
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
-use diesel::{ Queryable, Insertable };
+use diesel::{ Queryable, Insertable, QueryableByName };
 use crate::schema::{ product, product_category, product_item, product_variant };
 #[derive(Queryable, Debug)]
 pub struct Product {
@@ -19,7 +19,8 @@ pub struct InsertableProduct {
     pub store_id: i32,
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, QueryableByName, Debug)]
+#[diesel(table_name = crate::schema::product_item)]
 pub struct ProductItem {
     pub id: i32,
     pub sku: Option<String>,
