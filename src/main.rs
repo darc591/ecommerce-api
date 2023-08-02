@@ -18,7 +18,7 @@ fn routes(app: &mut web::ServiceConfig) {
                 .service(controllers::auth::login)
         )
         .service(
-            web::scope("address")
+            web::scope("addresses")
                 .service(controllers::address::find_address)
                 .service(controllers::address::list_addresses)
                 .service(controllers::address::create_address)
@@ -26,17 +26,17 @@ fn routes(app: &mut web::ServiceConfig) {
                 .service(controllers::address::delete_address)
         )
         .service(
-            web::scope("store")
+            web::scope("stores")
                 .service(controllers::store::create_store)
         )
         .service(
-            web::scope("product")
+            web::scope("products")
                 .service(controllers::product::create_product_category)
                 .service(controllers::product::create_product_variant)
                 .service(controllers::product::create_product)
         )
         .service(
-            web::scope("shopping-cart")
+            web::scope("shopping-carts")
                 .service(controllers::shopping_cart::create_shopping_cart)
                 .service(controllers::shopping_cart::edit_shopping_cart)
             

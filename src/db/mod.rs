@@ -4,6 +4,8 @@ pub mod store;
 pub mod store_invite;
 pub mod product;
 pub mod shopping_cart;
+pub mod order_item;
+pub mod product_item;
 
 use diesel::{ pg::PgConnection, r2d2::{ self, ConnectionManager } };
 

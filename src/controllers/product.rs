@@ -1,9 +1,9 @@
-use actix_web::{ web, post, HttpResponse };
+use actix_web::{ web, post, get, HttpResponse };
 use serde::Deserialize;
 use validator::Validate;
 
 use crate::{
-    db::{ Pool, product },
+    db::{ Pool, product, self },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::response::ResponseBody,
@@ -17,7 +17,7 @@ pub struct CreateCategoryBody {
     pub store_id: i32,
 }
 
-#[post("/category")]
+#[post("/categories")]
 async fn create_product_category(
     auth: AuthMiddleware,
     body: web::Json<CreateCategoryBody>,
@@ -45,7 +45,7 @@ pub struct CreateVariantBody {
     pub store_id: i32,
 }
 
-#[post("/variant")]
+#[post("/variants")]
 async fn create_product_variant(
     auth: AuthMiddleware,
     body: web::Json<CreateVariantBody>,

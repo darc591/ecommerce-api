@@ -11,14 +11,26 @@ use crate::{
     utils::validation::validate,
 };
 
-use super::Connection;
+use super::{ Connection, order_item as db_order_item, product_item as db_product_item };
+
+pub fn find(id: &i32, conn: &mut Connection) -> Result<ShoppingCart, ServiceError> {
+    let shopping_cart_result = sql_query("SELECT * FROM public.shopping_cart WHERE id = $1")
+        .bind::<Integer, _>(id)
+        .get_result::<ShoppingCart>(conn);
+
+    match shopping_cart_result {
+        Ok(s_cart) => Ok(s_cart),
+        Err(_) =>
+            Err(ServiceError::NotFound { error_message: "Shopping cart not found".to_string() }),
+    }
+}
 
 pub fn create(
     payload: NewShoppingCartBody,
     user_id: i32,
     conn: &mut Connection
 ) -> Result<IDResponse<i32>, ServiceError> {
-    use crate::schema::{ shopping_cart, order_item };
+    use crate::schema::shopping_cart;
 
     let existing_shopping_cart = sql_query(
         "SELECT * FROM public.shopping_cart WHERE customer_id = $1 AND store_id = $2"
@@ -33,56 +45,38 @@ pub fn create(
         });
     }
 
-    let existing_product_item = sql_query(
-        "SELECT * FROM public.product_item WHERE id = $1 AND store_id = $2 AND deleted = false"
-    )
-        .bind::<Integer, _>(payload.product_item_id)
-        .bind::<Integer, _>(payload.store_id)
-        .get_result::<ProductItem>(conn);
+    let product_item = db_product_item::find(&payload.product_item_id, conn)?;
 
-    match existing_product_item {
-        Ok(p_item) => {
-            if p_item.stock < payload.quantity {
-                return Err(ServiceError::Forbidden {
-                    error_message: "Quantity not available".to_string(),
-                });
-            }
-
-            let new_shopping_cart = InsertableShoppingCart {
-                customer_id: user_id,
-                store_id: payload.store_id,
-            };
-
-            let new_cart_result = diesel
-                ::insert_into(shopping_cart::dsl::shopping_cart)
-                .values(new_shopping_cart)
-                .returning(shopping_cart::dsl::id)
-                .get_result::<i32>(conn)
-                .unwrap();
-
-            let new_order_item = InsertableOrderItem {
-                order_id: None,
-                product_item_id: p_item.id,
-                quantity: payload.quantity,
-                shopping_cart_id: Some(new_cart_result),
-                unit_price: p_item.price,
-            };
-
-            let order_item_result = diesel
-                ::insert_into(order_item::dsl::order_item)
-                .values(new_order_item)
-                .execute(conn);
-
-            if order_item_result.is_err() {
-                return Err(ServiceError::InternalServerError {
-                    error_message: order_item_result.unwrap_err().to_string(),
-                });
-            }
-
-            Ok(IDResponse { id: new_cart_result })
-        }
-        Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
+    if product_item.stock < payload.quantity {
+        return Err(ServiceError::Forbidden {
+            error_message: "Quantity not available".to_string(),
+        });
     }
+
+    let new_shopping_cart = InsertableShoppingCart {
+        customer_id: user_id,
+        store_id: payload.store_id,
+    };
+
+    let new_cart_result = diesel
+        ::insert_into(shopping_cart::dsl::shopping_cart)
+        .values(new_shopping_cart)
+        .returning(shopping_cart::dsl::id)
+        .get_result::<i32>(conn)
+        .unwrap();
+
+    db_order_item::create(
+        InsertableOrderItem {
+            order_id: None,
+            product_item_id: product_item.id,
+            quantity: payload.quantity,
+            shopping_cart_id: Some(new_cart_result),
+            unit_price: product_item.price,
+        },
+        conn
+    )?;
+
+    Ok(IDResponse { id: new_cart_result })
 }
 
 pub fn edit(
@@ -90,17 +84,9 @@ pub fn edit(
     shopping_cart_id: i32,
     conn: &mut Connection
 ) -> Result<(), ServiceError> {
-    use crate::schema::order_item;
-
     validate(&payload)?;
 
-    let existings_shopping_cart = sql_query("SELECT * FROM public.shopping_cart WHERE id = $1")
-        .bind::<Integer, _>(shopping_cart_id)
-        .get_result::<ShoppingCart>(conn);
-
-    if existings_shopping_cart.is_err() {
-        return Err(ServiceError::NotFound { error_message: "Shopping cart not found".to_string() });
-    }
+    find(&shopping_cart_id, conn)?;
 
     let result = sql_query(
         "SELECT * FROM public.order_item o
@@ -127,26 +113,18 @@ pub fn edit(
                                 error_message: "Quantity not available".to_string(),
                             });
                         } else {
-                            let new_order_item = InsertableOrderItem {
-                                product_item_id: payload.product_item_id,
-                                quantity: payload.quantity,
-                                shopping_cart_id: Some(shopping_cart_id),
-                                unit_price: p_item.price,
-                                order_id: None,
-                            };
+                            db_order_item::create(
+                                InsertableOrderItem {
+                                    product_item_id: payload.product_item_id,
+                                    quantity: payload.quantity,
+                                    shopping_cart_id: Some(shopping_cart_id),
+                                    unit_price: p_item.price,
+                                    order_id: None,
+                                },
+                                conn
+                            )?;
 
-                            let order_item_result = diesel
-                                ::insert_into(order_item::dsl::order_item)
-                                .values(new_order_item)
-                                .execute(conn);
-
-                            if order_item_result.is_err() {
-                                return Err(ServiceError::InternalServerError {
-                                    error_message: order_item_result.unwrap_err().to_string(),
-                                });
-                            } else {
-                                return Ok(());
-                            }
+                            Ok(())
                         }
                     }
                     Err(_) => {
@@ -163,21 +141,13 @@ pub fn edit(
                         error_message: "Quantity not available".to_string(),
                     });
                 } else {
-                    match
-                        sql_query("UPDATE public.order_item SET quantity = $1 WHERE id = $2")
-                            .bind::<Integer, _>(payload.quantity)
-                            .bind::<Integer, _>(existing_order_item.id)
-                            .execute(conn)
-                    {
-                        Ok(_) => {
-                            return Ok(());
-                        }
-                        Err(e) => {
-                            return Err(ServiceError::InternalServerError {
-                                error_message: e.to_string(),
-                            });
-                        }
-                    }
+                    db_order_item::update_quantity(
+                        &payload.quantity,
+                        &existing_order_item.id,
+                        conn
+                    )?;
+
+                    Ok(())
                 }
             }
         }
@@ -185,4 +155,13 @@ pub fn edit(
             return Err(ServiceError::InternalServerError { error_message: e.to_string() });
         }
     }
+}
+
+pub fn delete(
+    shopping_cart_id: i32,
+    user_id: i32,
+    conn: &mut Connection
+) -> Result<(), ServiceError> {
+    find(&shopping_cart_id, conn)?;
+    unimplemented!()
 }

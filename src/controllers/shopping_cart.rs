@@ -1,4 +1,4 @@
-use actix_web::{ web, post, put, HttpResponse };
+use actix_web::{ web, post, put, HttpResponse, delete };
 use serde::Deserialize;
 use validator::Validate;
 use crate::{
@@ -37,6 +37,7 @@ async fn create_shopping_cart(
 
 #[derive(Deserialize, Validate)]
 pub struct EditShoppingCartBody {
+    pub store_id: i32,
     pub product_item_id: i32,
     #[validate(range(min = 1))]
     pub quantity: i32,
@@ -59,4 +60,13 @@ async fn edit_shopping_cart(
         Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
         Err(e) => Err(e),
     }
+}
+
+#[delete("/{id}")]
+async fn delete_shopping_cart(
+    _: AuthMiddleware,
+    path: web::Path<i32>,
+    pool: web::Data<Pool>
+) -> Result<HttpResponse, ServiceError> {
+    unimplemented!()
 }
