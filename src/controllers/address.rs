@@ -1,5 +1,5 @@
 use crate::{
-    db::{ Pool, address },
+    db::{ Pool, address::AddressService },
     constants::{ MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
@@ -23,7 +23,14 @@ async fn find_address(
 ) -> Result<HttpResponse, ServiceError> {
     let address_id = path.into_inner();
     let user = auth.user;
-    match address::find(address_id, user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match
+        AddressService::find(
+            &address_id,
+            &user.sub.parse().unwrap(),
+            false,
+            &mut pool.get().unwrap()
+        )
+    {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
         Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
@@ -35,7 +42,7 @@ async fn list_addresses(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match address::list(user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match AddressService::list(user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
         Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
         Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
@@ -67,7 +74,13 @@ async fn create_address(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match address::create(body.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match
+        AddressService::create(
+            body.into_inner(),
+            user.sub.parse().unwrap(),
+            &mut pool.get().unwrap()
+        )
+    {
         Ok(id_res) => {
             Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id_res)))
         }
@@ -84,7 +97,7 @@ async fn edit_address(
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
     match
-        address::edit(
+        AddressService::edit(
             path.into_inner(),
             user.sub.parse().unwrap(),
             body.into_inner(),
@@ -103,7 +116,13 @@ async fn delete_address(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match address::delete(path.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match
+        AddressService::delete(
+            path.into_inner(),
+            user.sub.parse().unwrap(),
+            &mut pool.get().unwrap()
+        )
+    {
         Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ()))),
         Err(e) => Err(e),
     }

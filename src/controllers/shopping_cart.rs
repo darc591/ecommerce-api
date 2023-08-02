@@ -4,7 +4,7 @@ use validator::Validate;
 use crate::{
     error::ServiceError,
     middleware::auth::AuthMiddleware,
-    db::{ Pool, shopping_cart },
+    db::{ Pool, shopping_cart::ShoppingCartService, order_item::OrderItemService },
     models::response::ResponseBody,
     constants::{ MESSAGE_CREATED, MESSAGE_OK },
 };
@@ -22,11 +22,10 @@ async fn create_shopping_cart(
     body: web::Json<NewShoppingCartBody>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    let user = auth.user;
     match
-        shopping_cart::create(
+        ShoppingCartService::create(
             body.into_inner(),
-            user.sub.parse().unwrap(),
+            auth.user.sub.parse().unwrap(),
             &mut pool.get().unwrap()
         )
     {
@@ -50,13 +49,7 @@ async fn edit_shopping_cart(
     body: web::Json<EditShoppingCartBody>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    match
-        shopping_cart::edit(
-            body.into_inner(),
-            path.into_inner(),
-            &mut pool.get().unwrap()
-        )
-    {
+    match ShoppingCartService::edit(body.into_inner(), path.into_inner(), &mut pool.get().unwrap()) {
         Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
         Err(e) => Err(e),
     }
@@ -68,5 +61,25 @@ async fn delete_shopping_cart(
     path: web::Path<i32>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    unimplemented!()
+    let shopping_cart_id = path.into_inner();
+
+    let mut conn = pool.get().unwrap();
+
+    ShoppingCartService::find(&shopping_cart_id, &mut conn)?;
+
+    let order_items = OrderItemService::find_by_shopping_cart(&shopping_cart_id, &mut conn);
+
+    if order_items.is_ok() {
+        let order_items_ids_to_delete: Vec<i32> = order_items
+            .unwrap()
+            .into_iter()
+            .map(|o_item| o_item.id)
+            .collect();
+
+        OrderItemService::delete(order_items_ids_to_delete, &mut conn)?;
+    }
+
+    ShoppingCartService::delete(&shopping_cart_id, &mut conn)?;
+    
+    Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, "")))
 }
