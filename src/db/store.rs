@@ -12,7 +12,7 @@ use crate::{
     error::ServiceError,
 };
 use diesel::prelude::*;
-use super::{ Connection, user as db_user };
+use super::{ Connection, user::UserService };
 
 pub struct StoreService;
 
@@ -71,7 +71,7 @@ impl StoreService {
 
         validate(&payload)?;
 
-        let existing_user = db_user::find_by_email(&payload.email, conn);
+        let existing_user = UserService::find_by_email(&payload.email, conn);
 
         if existing_user.is_ok() {
             return Err(ServiceError::Forbidden {
