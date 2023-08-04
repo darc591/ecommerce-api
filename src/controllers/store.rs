@@ -2,7 +2,7 @@ use actix_web::{ web, post, HttpResponse };
 use serde::Deserialize;
 use validator::Validate;
 use crate::{
-    db::{ Pool, store },
+    db::{ Pool, store::StoreService },
     error::ServiceError,
     models::response::ResponseBody,
     constants::MESSAGE_CREATED,
@@ -28,7 +28,7 @@ async fn create_store(
     body: web::Json<NewStorePayload>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    match store::create(body.into_inner(), &mut pool.get().unwrap()) {
+    match StoreService::create(body.into_inner(), &mut pool.get().unwrap()) {
         Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
         Err(e) => Err(e),
     }

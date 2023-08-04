@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use super::{ Connection, store_invite };
+use super::{ Connection, store::StoreService };
 use crate::{
     models::{ user::{ User, InsertableUser, UserType }, response::{ TokenResponse, IDResponse } },
     controllers::auth::{ UserSignupPayload, UserLoginPayload },
@@ -35,7 +35,7 @@ pub fn signup(
     match payload.type_ {
         UserType::ADMIN => {
             if let Some(invite_code) = payload.invite_code {
-                if let Some(store_id) = store_invite::check_valid(&invite_code, conn) {
+                if let Some(store_id) = StoreService::check_store_invite(&invite_code, conn) {
                     insertable_user = InsertableUser {
                         email: payload.email,
                         first_name: payload.first_name,

@@ -11,7 +11,7 @@ use crate::{
     utils::validation::validate,
 };
 
-use super::{ Connection, order_item::OrderItemService, product_item as db_product_item };
+use super::{ Connection, order_item::OrderItemService, product_item::ProductItemService };
 
 pub struct ShoppingCartService;
 
@@ -50,7 +50,7 @@ impl ShoppingCartService {
             });
         }
 
-        let product_item = db_product_item::find(&payload.product_item_id, false, conn)?;
+        let product_item = ProductItemService::find(&payload.product_item_id, false, conn)?;
 
         if product_item.stock < payload.quantity {
             return Err(ServiceError::Forbidden {

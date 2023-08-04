@@ -1,9 +1,9 @@
-use actix_web::{ web, post, get, HttpResponse };
+use actix_web::{ web, post, HttpResponse };
 use serde::Deserialize;
 use validator::Validate;
 
 use crate::{
-    db::{ Pool, product, self },
+    db::{ Pool, product::ProductService },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::response::ResponseBody,
@@ -26,7 +26,7 @@ async fn create_product_category(
     let user = auth.user;
 
     match
-        product::create_category(
+        ProductService::create_category(
             body.into_inner(),
             user.sub.parse().unwrap(),
             &mut pool.get().unwrap()
@@ -53,7 +53,7 @@ async fn create_product_variant(
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
     match
-        product::create_variant(
+        ProductService::create_variant(
             body.into_inner(),
             user.sub.parse().unwrap(),
             &mut pool.get().unwrap()
@@ -91,7 +91,13 @@ async fn create_product(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
-    match product::create(body.into_inner(), user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
+    match
+        ProductService::create(
+            body.into_inner(),
+            user.sub.parse().unwrap(),
+            &mut pool.get().unwrap()
+        )
+    {
         Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
         Err(e) => Err(e),
     }

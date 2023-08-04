@@ -21,7 +21,7 @@ impl OrderItemService {
 
         match order_items_result {
             Ok(items) => Ok(items),
-            Err(e) =>
+            Err(_) =>
                 Err(ServiceError::NotFound { error_message: "Order items not found".to_string() }),
         }
     }

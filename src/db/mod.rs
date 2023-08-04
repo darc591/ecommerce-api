@@ -1,7 +1,6 @@
 pub mod user;
 pub mod address;
 pub mod store;
-pub mod store_invite;
 pub mod product;
 pub mod shopping_cart;
 pub mod order_item;

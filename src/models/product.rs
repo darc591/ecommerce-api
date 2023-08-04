@@ -1,4 +1,4 @@
-use bigdecimal::{ BigDecimal, ToPrimitive };
+use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use diesel::{ Queryable, Insertable, QueryableByName };
 use crate::schema::{ product, product_category, product_item, product_variant };
