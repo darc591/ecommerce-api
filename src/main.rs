@@ -7,6 +7,7 @@ mod utils;
 mod controllers;
 mod db;
 
+use actix_cors::Cors;
 use actix_web::{ middleware::Logger, web, App, HttpServer };
 use log::info;
 use std::env;
@@ -60,8 +61,12 @@ async fn main() -> std::io::Result<()> {
 
     info!("logando!");
     HttpServer::new(move || {
+
+        let cors = Cors::permissive();
+
         App::new()
             .wrap(Logger::default())
+            .wrap(cors)
             .wrap(Logger::new("%a %{User-Agent}i"))
             .app_data(web::Data::new(pool.clone()))
             .configure(routes)
