@@ -1,6 +1,7 @@
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use diesel::{ Queryable, Insertable, QueryableByName };
+use serde::Serialize;
 use crate::schema::{ product, product_category, product_item, product_variant };
 #[derive(Queryable, Debug)]
 pub struct Product {
@@ -73,11 +74,13 @@ pub struct ProductDiscount {
     pub store_id: i32,
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, QueryableByName, Debug, Serialize)]
+#[diesel(table_name = crate::schema::product_variant)]
 pub struct ProductVariant {
     pub id: i32,
     pub name: String,
     pub value: String,
+    #[serde(skip)]
     pub store_id: i32,
 }
 #[derive(Insertable)]

@@ -1,4 +1,4 @@
-use actix_web::{ web, post, HttpResponse };
+use actix_web::{ web, post, get, HttpResponse };
 use serde::Deserialize;
 use validator::Validate;
 
@@ -6,8 +6,8 @@ use crate::{
     db::{ Pool, product::ProductService },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
-    models::response::ResponseBody,
-    constants::MESSAGE_CREATED,
+    models::{ response::ResponseBody, user::UserType },
+    constants::{MESSAGE_CREATED, MESSAGE_OK},
 };
 
 #[derive(Deserialize, Validate)]
@@ -99,6 +99,25 @@ async fn create_product(
         )
     {
         Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Err(e) => Err(e),
+    }
+}
+
+#[get("/variants")]
+async fn list_variants(
+    auth: AuthMiddleware,
+    pool: web::Data<Pool>
+) -> Result<HttpResponse, ServiceError> {
+    let user = auth.user;
+
+    let user_type = UserType::from_i32(user.type_);
+
+    if user_type == UserType::CUSTOMER {
+        return Err(ServiceError::Forbidden { error_message: "User without permissions".to_string() });
+    }
+
+    match ProductService::list_variants(&user.managed_store_id.unwrap(), &mut pool.get().unwrap()) {
+        Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
         Err(e) => Err(e),
     }
 }

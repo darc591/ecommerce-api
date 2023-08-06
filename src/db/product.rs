@@ -1,5 +1,5 @@
 use bigdecimal::{ BigDecimal, FromPrimitive };
-use diesel::prelude::*;
+use diesel::{ prelude::*, sql_query, sql_types::Integer };
 use crate::{
     controllers::product::{ CreateCategoryBody, CreateVariantBody, CreateProductBody },
     models::{
@@ -8,6 +8,7 @@ use crate::{
             InsertableVariant,
             InsertableProduct,
             InsertableProductItem,
+            ProductVariant,
         },
         response::IDResponse,
     },
@@ -139,6 +140,20 @@ impl ProductService {
                 Err(ServiceError::InternalServerError {
                     error_message: e.to_string(),
                 }),
+        }
+    }
+
+    pub fn list_variants(
+        store_id: &i32,
+        conn: &mut Connection
+    ) -> Result<Vec<ProductVariant>, ServiceError> {
+        let variants_result = sql_query("SELECT * FROM public.product_variant WHERE store_id = $1")
+            .bind::<Integer, _>(store_id)
+            .get_results::<ProductVariant>(conn);
+
+        match variants_result {
+            Ok(values) => Ok(values),
+            Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
         }
     }
 }

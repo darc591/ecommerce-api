@@ -9,10 +9,11 @@ pub struct TokenClaims {
     pub sub: String,
     pub first_name: String,
     pub last_name: String,
+    pub managed_store_id: Option<i32>
 }
 
 impl TokenClaims {
-    pub fn new(type_: i32, sub: &str, first_name: &str, last_name: &str) -> Self {
+    pub fn new(type_: i32, sub: &str, first_name: &str, last_name: &str, managed_store_id: Option<i32>) -> Self {
         let mut timer = SystemTime::now();
         //7 days duration
         timer = timer + Duration::from_secs(604800);
@@ -23,6 +24,7 @@ impl TokenClaims {
             first_name: first_name.to_string(),
             last_name: last_name.to_string(),
             sub: sub.to_string(),
+            managed_store_id, 
             type_,
             exp: exp_time as usize,
         }

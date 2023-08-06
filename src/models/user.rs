@@ -18,11 +18,21 @@ pub struct User {
     pub managed_store_id: Option<i32>,
 }
 
-#[derive(Serialize_repr, Deserialize_repr)]
+#[derive(Serialize_repr, Deserialize_repr, PartialEq)]
 #[repr(u8)]
 pub enum UserType {
     CUSTOMER,
     ADMIN,
+}
+
+impl UserType {
+    pub fn from_i32(int_type: i32) -> Self {
+        match int_type {
+            0 => UserType::CUSTOMER,
+            1 => UserType::ADMIN,
+            _ => panic!("Unknown value: {}", int_type),
+        }
+    }
 }
 
 #[derive(Insertable)]

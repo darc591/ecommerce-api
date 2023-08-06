@@ -126,7 +126,8 @@ impl UserService {
                 existing_user.type_,
                 &existing_user.id.to_string(),
                 &existing_user.first_name,
-                &existing_user.last_name
+                &existing_user.last_name,
+                existing_user.managed_store_id,
             );
 
             let token_str = token_claims.sign_token().unwrap();
