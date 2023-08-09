@@ -7,9 +7,9 @@ use crate::{
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::{ response::ResponseBody, user::UserType },
-    constants::{MESSAGE_CREATED, MESSAGE_OK},
+    constants::{ MESSAGE_CREATED, MESSAGE_OK },
 };
-
+// TODO parar de recibir store_id como parametro en el path
 #[derive(Deserialize, Validate)]
 pub struct CreateCategoryBody {
     #[validate(length(min = 2, max = 60))]
@@ -42,7 +42,6 @@ pub struct CreateVariantBody {
     #[validate(length(min = 2, max = 60))]
     pub name: String,
     pub value: String,
-    pub store_id: i32,
 }
 
 #[post("/variants")]
@@ -51,11 +50,13 @@ async fn create_product_variant(
     body: web::Json<CreateVariantBody>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    let user = auth.user;
+    let (user_id, store_id) = (auth.user.sub.parse().unwrap(), auth.user.managed_store_id.unwrap());
+
     match
         ProductService::create_variant(
             body.into_inner(),
-            user.sub.parse().unwrap(),
+            user_id,
+            store_id,
             &mut pool.get().unwrap()
         )
     {
@@ -113,7 +114,9 @@ async fn list_variants(
     let user_type = UserType::from_i32(user.type_);
 
     if user_type == UserType::CUSTOMER {
-        return Err(ServiceError::Forbidden { error_message: "User without permissions".to_string() });
+        return Err(ServiceError::Forbidden {
+            error_message: "User without permissions".to_string(),
+        });
     }
 
     match ProductService::list_variants(&user.managed_store_id.unwrap(), &mut pool.get().unwrap()) {

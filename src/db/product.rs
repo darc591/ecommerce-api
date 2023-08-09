@@ -53,18 +53,19 @@ impl ProductService {
     pub fn create_variant(
         payload: CreateVariantBody,
         user_id: i32,
+        store_id: i32,
         conn: &mut Connection
     ) -> Result<IDResponse<i32>, ServiceError> {
         use crate::schema::product_variant;
 
         validate(&payload)?;
 
-        StoreService::check_store_admin(payload.store_id, user_id, conn)?;
+        StoreService::check_store_admin(store_id, user_id, conn)?;
 
         let new_variant = InsertableVariant {
             name: payload.name,
             value: payload.value,
-            store_id: payload.store_id,
+            store_id,
         };
 
         match
