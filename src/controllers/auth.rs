@@ -1,6 +1,5 @@
 use crate::{
     db::{ Pool, user::UserService },
-    constants::{ MESSAGE_CREATED, MESSAGE_OK },
     error::ServiceError,
     models::{ response::ResponseBody, user::UserType },
 };
@@ -28,7 +27,7 @@ async fn signup(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match UserService::signup(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
         Err(e) => Err(e),
     }
 }
@@ -47,7 +46,7 @@ async fn login(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match UserService::login(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(token_res) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, token_res))),
+        Ok(token_res) => Ok(HttpResponse::Ok().json(ResponseBody::new(token_res))),
         Err(e) => Err(e),
     }
 }

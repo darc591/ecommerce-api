@@ -16,3 +16,18 @@ pub struct InsertableStore {
     pub name: String,
     pub logo_url: Option<String>,
 }
+
+#[derive(Queryable, Serialize, Debug)]
+pub struct StoreInvite {
+    pub id: String,
+    pub valid: bool,
+    pub created_at: NaiveDateTime,
+    pub store_id: i32,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::store_invite)]
+pub struct InsertableStoreInvite {
+    pub id: String,
+    pub store_id: i32,
+}

@@ -5,7 +5,7 @@ use crate::{
     db::{ Pool, store::StoreService },
     error::ServiceError,
     models::response::ResponseBody,
-    constants::MESSAGE_CREATED,
+    middleware::auth::AuthMiddleware,
 };
 
 #[derive(Deserialize, Validate)]
@@ -29,7 +29,23 @@ async fn create_store(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match StoreService::create(body.into_inner(), &mut pool.get().unwrap()) {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
+        Err(e) => Err(e),
+    }
+}
+
+#[post("/store-invite")]
+async fn create_store_invite(
+    auth: AuthMiddleware,
+    pool: web::Data<Pool>
+) -> Result<HttpResponse, ServiceError> {
+    match
+        StoreService::create_store_invite(
+            &auth.user.managed_store_id.unwrap(),
+            &mut pool.get().unwrap()
+        )
+    {
+        Ok(id_res) => Ok(HttpResponse::Created().json(ResponseBody::new(id_res))),
         Err(e) => Err(e),
     }
 }

@@ -7,14 +7,12 @@ use crate::{
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::{ response::ResponseBody, user::UserType },
-    constants::{ MESSAGE_CREATED, MESSAGE_OK },
 };
-// TODO parar de recibir store_id como parametro en el path
+
 #[derive(Deserialize, Validate)]
 pub struct CreateCategoryBody {
     #[validate(length(min = 2, max = 60))]
     pub name: String,
-    pub store_id: i32,
 }
 
 #[post("/categories")]
@@ -23,16 +21,17 @@ async fn create_product_category(
     body: web::Json<CreateCategoryBody>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    let user = auth.user;
+    let (user_id, store_id) = (auth.user.sub.parse().unwrap(), auth.user.managed_store_id.unwrap());
 
     match
         ProductService::create_category(
             body.into_inner(),
-            user.sub.parse().unwrap(),
+            &store_id,
+            &user_id,
             &mut pool.get().unwrap()
         )
     {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
         Err(e) => Err(e),
     }
 }
@@ -55,12 +54,12 @@ async fn create_product_variant(
     match
         ProductService::create_variant(
             body.into_inner(),
-            user_id,
-            store_id,
+            &user_id,
+            &store_id,
             &mut pool.get().unwrap()
         )
     {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
         Err(e) => Err(e),
     }
 }
@@ -80,7 +79,6 @@ pub struct CreateProductBody {
     #[validate(length(min = 2, max = 60))]
     pub name: String,
     pub category_id: i32,
-    pub store_id: i32,
     #[validate]
     pub data: Vec<ProductDataBody>,
 }
@@ -91,15 +89,10 @@ async fn create_product(
     body: web::Json<CreateProductBody>,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    let user = auth.user;
-    match
-        ProductService::create(
-            body.into_inner(),
-            user.sub.parse().unwrap(),
-            &mut pool.get().unwrap()
-        )
-    {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+    let (user_id, store_id) = (auth.user.sub.parse().unwrap(), auth.user.managed_store_id.unwrap());
+
+    match ProductService::create(body.into_inner(), &user_id, &store_id, &mut pool.get().unwrap()) {
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
         Err(e) => Err(e),
     }
 }
@@ -109,9 +102,10 @@ async fn list_variants(
     auth: AuthMiddleware,
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
-    let user = auth.user;
-
-    let user_type = UserType::from_i32(user.type_);
+    let (user_type, store_id) = (
+        UserType::from_i32(auth.user.type_),
+        auth.user.managed_store_id.unwrap(),
+    );
 
     if user_type == UserType::CUSTOMER {
         return Err(ServiceError::Forbidden {
@@ -119,8 +113,8 @@ async fn list_variants(
         });
     }
 
-    match ProductService::list_variants(&user.managed_store_id.unwrap(), &mut pool.get().unwrap()) {
-        Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, values))),
+    match ProductService::list_variants(&store_id, &mut pool.get().unwrap()) {
+        Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(values))),
         Err(e) => Err(e),
     }
 }

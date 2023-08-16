@@ -1,6 +1,5 @@
 use crate::{
     db::{ Pool, address::AddressService },
-    constants::{ MESSAGE_CREATED, MESSAGE_OK, MESSAGE_UPDATED },
     error::ServiceError,
     middleware::auth::AuthMiddleware,
     models::{ response::ResponseBody, address::UserAddress },
@@ -74,11 +73,7 @@ async fn find_address(
 
     match find_result {
         Ok(found_address) =>
-            Ok(
-                HttpResponse::Ok().json(
-                    ResponseBody::new(MESSAGE_OK, FindAddressResponse::new(found_address))
-                )
-            ),
+            Ok(HttpResponse::Ok().json(ResponseBody::new(FindAddressResponse::new(found_address)))),
         Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
 }
@@ -90,7 +85,8 @@ async fn list_addresses(
 ) -> Result<HttpResponse, ServiceError> {
     let user = auth.user;
     match AddressService::list(&user.sub.parse().unwrap(), &mut pool.get().unwrap()) {
-        Ok(addresses) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, FindAddressResponse::new_vec(addresses)))),
+        Ok(addresses) =>
+            Ok(HttpResponse::Ok().json(ResponseBody::new(FindAddressResponse::new_vec(addresses)))),
         Err(e) => Err(ServiceError::NotFound { error_message: e.to_string() }),
     }
 }
@@ -128,9 +124,7 @@ async fn create_address(
             &mut pool.get().unwrap()
         )
     {
-        Ok(id_res) => {
-            Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id_res)))
-        }
+        Ok(id_res) => { Ok(HttpResponse::Created().json(ResponseBody::new(id_res))) }
         Err(e) => Err(e),
     }
 }
@@ -151,7 +145,7 @@ async fn edit_address(
             &mut pool.get().unwrap()
         )
     {
-        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_UPDATED, ()))),
+        Ok(_) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Err(e),
     }
 }
@@ -170,7 +164,7 @@ async fn delete_address(
             &mut pool.get().unwrap()
         )
     {
-        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ()))),
+        Ok(_) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Err(e),
     }
 }

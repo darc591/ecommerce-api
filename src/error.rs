@@ -39,6 +39,6 @@ impl error::ResponseError for ServiceError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code())
             .insert_header(ContentType::json())
-            .json(ResponseBody::new(&self.to_string(), String::from("")))
+            .json(ResponseBody::new_err(&self.to_string()))
     }
 }

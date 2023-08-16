@@ -6,7 +6,6 @@ use crate::{
     middleware::auth::AuthMiddleware,
     db::{ Pool, shopping_cart::ShoppingCartService, order_item::OrderItemService },
     models::response::ResponseBody,
-    constants::{ MESSAGE_CREATED, MESSAGE_OK },
 };
 
 #[derive(Deserialize)]
@@ -29,7 +28,7 @@ async fn create_shopping_cart(
             &mut pool.get().unwrap()
         )
     {
-        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(MESSAGE_CREATED, id))),
+        Ok(id) => Ok(HttpResponse::Created().json(ResponseBody::new(id))),
         Err(e) => Err(e),
     }
 }
@@ -50,7 +49,7 @@ async fn edit_shopping_cart(
     pool: web::Data<Pool>
 ) -> Result<HttpResponse, ServiceError> {
     match ShoppingCartService::edit(body.into_inner(), path.into_inner(), &mut pool.get().unwrap()) {
-        Ok(_) => Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, ""))),
+        Ok(_) => Ok(HttpResponse::Ok().finish()),
         Err(e) => Err(e),
     }
 }
@@ -81,5 +80,5 @@ async fn delete_shopping_cart(
 
     ShoppingCartService::delete(&shopping_cart_id, &mut conn)?;
     
-    Ok(HttpResponse::Ok().json(ResponseBody::new(MESSAGE_OK, "")))
+    Ok(HttpResponse::Ok().finish())
 }

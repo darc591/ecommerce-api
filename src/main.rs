@@ -1,4 +1,3 @@
-mod constants;
 mod error;
 mod middleware;
 mod models;
@@ -29,6 +28,7 @@ fn routes(app: &mut web::ServiceConfig) {
         .service(
             web::scope("stores")
                 .service(controllers::store::create_store)
+                .service(controllers::store::create_store_invite)
         )
         .service(
             web::scope("products")

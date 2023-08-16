@@ -1,6 +1,5 @@
 pub mod address;
 pub mod response;
-pub mod store_invite;
 pub mod user;
 pub mod store;
 pub mod payment_method;

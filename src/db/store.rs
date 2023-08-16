@@ -2,24 +2,24 @@ use crate::{
     controllers::store::NewStorePayload,
     models::{
         response::IDResponse,
-        store::InsertableStore,
+        store::{ InsertableStore, StoreInvite, InsertableStoreInvite },
         user::{ InsertableUser, UserType },
         payment_method::InsertablePaymentMethod,
         shipping::InsertableShippingMethod,
-        store_invite::StoreInvite,
     },
     utils::{ password_hash::PasswordHash, validation::validate },
     error::ServiceError,
 };
 use diesel::prelude::*;
+use rand::distributions::{ Alphanumeric, DistString };
 use super::{ Connection, user::UserService };
 
 pub struct StoreService;
 
 impl StoreService {
     pub fn check_store_admin(
-        store_id: i32,
-        user_id: i32,
+        store_id: &i32,
+        user_id: &i32,
         conn: &mut Connection
     ) -> Result<(), ServiceError> {
         use crate::schema::{ user, store };
@@ -48,9 +48,31 @@ impl StoreService {
         }
     }
 
+    pub fn create_store_invite(
+        store_id: &i32,
+        conn: &mut Connection
+    ) -> Result<IDResponse<String>, ServiceError> {
+        use crate::schema::store_invite;
+
+        let invite_id = Alphanumeric.sample_string(&mut rand::thread_rng(), 12);
+
+        let new_invite_result = diesel
+            ::insert_into(store_invite::dsl::store_invite)
+            .values(InsertableStoreInvite {
+                id: invite_id.to_owned(),
+                store_id: store_id.to_owned(),
+            })
+            .execute(conn);
+
+        match new_invite_result {
+            Ok(_) => Ok(IDResponse { id: invite_id }),
+            Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
+        }
+    }
+
     pub fn check_store_invite(invite_code: &str, conn: &mut Connection) -> Option<i32> {
         use crate::schema::store_invite;
-        
+
         let result: QueryResult<StoreInvite> = store_invite::dsl::store_invite
             .find(invite_code)
             .first::<StoreInvite>(conn);

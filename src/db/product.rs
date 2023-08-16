@@ -24,18 +24,19 @@ pub struct ProductService;
 impl ProductService {
     pub fn create_category(
         payload: CreateCategoryBody,
-        user_id: i32,
+        store_id: &i32,
+        user_id: &i32,
         conn: &mut Connection
     ) -> Result<IDResponse<i32>, ServiceError> {
         use crate::schema::product_category;
 
         validate(&payload)?;
 
-        StoreService::check_store_admin(payload.store_id, user_id, conn)?;
+        StoreService::check_store_admin(store_id, user_id, conn)?;
 
         let new_category = InsertableCategory {
             name: payload.name,
-            store_id: payload.store_id,
+            store_id: store_id.to_owned(),
         };
 
         match
@@ -52,8 +53,8 @@ impl ProductService {
 
     pub fn create_variant(
         payload: CreateVariantBody,
-        user_id: i32,
-        store_id: i32,
+        user_id: &i32,
+        store_id: &i32,
         conn: &mut Connection
     ) -> Result<IDResponse<i32>, ServiceError> {
         use crate::schema::product_variant;
@@ -65,7 +66,7 @@ impl ProductService {
         let new_variant = InsertableVariant {
             name: payload.name,
             value: payload.value,
-            store_id,
+            store_id: store_id.to_owned(),
         };
 
         match
@@ -82,7 +83,8 @@ impl ProductService {
 
     pub fn create(
         payload: CreateProductBody,
-        user_id: i32,
+        user_id: &i32,
+        store_id: &i32,
         conn: &mut Connection
     ) -> Result<IDResponse<i32>, ServiceError> {
         use crate::schema::{ product, product_item };
@@ -94,12 +96,12 @@ impl ProductService {
             });
         }
 
-        StoreService::check_store_admin(payload.store_id, user_id, conn)?;
+        StoreService::check_store_admin(store_id, user_id, conn)?;
 
         let new_product = InsertableProduct {
             name: payload.name,
             category_id: payload.category_id,
-            store_id: payload.store_id,
+            store_id: store_id.to_owned(),
         };
 
         match
@@ -119,7 +121,7 @@ impl ProductService {
                         price: BigDecimal::from_f32(p_data.price).unwrap(),
                         stock: p_data.stock,
                         variant_id: p_data.variant_id,
-                        store_id: payload.store_id,
+                        store_id: store_id.to_owned(),
                         product_id: product_id,
                     })
                     .collect();
