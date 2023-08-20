@@ -36,12 +36,13 @@ fn routes(app: &mut web::ServiceConfig) {
                 .service(controllers::product::create_product_variant)
                 .service(controllers::product::create_product)
                 .service(controllers::product::list_variants)
+                .service(controllers::product::list_categories)
         )
         .service(
             web::scope("shopping-carts")
                 .service(controllers::shopping_cart::create_shopping_cart)
                 .service(controllers::shopping_cart::edit_shopping_cart)
-            
+                .service(controllers::shopping_cart::delete_shopping_cart)
         );
         
 }

@@ -118,3 +118,25 @@ async fn list_variants(
         Err(e) => Err(e),
     }
 }
+
+#[get("/categories")]
+async fn list_categories(
+    auth: AuthMiddleware,
+    pool: web::Data<Pool>
+) -> Result<HttpResponse, ServiceError> {
+    let (user_type, store_id) = (
+        UserType::from_i32(auth.user.type_),
+        auth.user.managed_store_id.unwrap(),
+    );
+
+    if user_type == UserType::CUSTOMER {
+        return Err(ServiceError::Forbidden {
+            error_message: "User without permissions".to_string(),
+        });
+    }
+
+    match ProductService::list_categories(&store_id, &mut pool.get().unwrap()) {
+        Ok(values) => Ok(HttpResponse::Ok().json(ResponseBody::new(values))),
+        Err(e) => Err(e),
+    }
+}

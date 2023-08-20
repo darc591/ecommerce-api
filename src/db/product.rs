@@ -9,6 +9,7 @@ use crate::{
             InsertableProduct,
             InsertableProductItem,
             ProductVariant,
+            ProductCategory,
         },
         response::IDResponse,
     },
@@ -157,6 +158,22 @@ impl ProductService {
         match variants_result {
             Ok(values) => Ok(values),
             Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() }),
+        }
+    }
+
+    pub fn list_categories(
+        store_id: &i32,
+        conn: &mut Connection
+    ) -> Result<Vec<ProductCategory>, ServiceError> {
+        let categories_result = sql_query(
+            "SELECT * FROM public.product_category WHERE store_id = $1"
+        )
+            .bind::<Integer, _>(store_id)
+            .get_results::<ProductCategory>(conn);
+
+        match categories_result {
+            Ok(values) => Ok(values),
+            Err(e) => Err(ServiceError::InternalServerError { error_message: e.to_string() })
         }
     }
 }

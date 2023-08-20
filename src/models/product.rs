@@ -51,10 +51,12 @@ pub struct InsertableProductItem {
     pub variant_id: Option<i32>,
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, QueryableByName, Debug, Serialize)]
+#[diesel(table_name = crate::schema::product_variant)]
 pub struct ProductCategory {
     pub id: i32,
     pub name: String,
+    #[serde(skip)]
     pub store_id: i32,
 }
 
